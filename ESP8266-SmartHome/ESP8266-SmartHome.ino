@@ -8,7 +8,7 @@
 #include <ESP8266HTTPClient.h>
 
 #define DHTPIN 2
-#define DHTTYPE DHT11 
+#define DHTTYPE DHT22 
 
 // Initialize Wifi connection to the router
 const char* ssid  = SECRET_SSID;
