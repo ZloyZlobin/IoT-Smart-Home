@@ -64,35 +64,35 @@ void onReceive (TelegramProcessError tbcErr, JwcProcessError jwcErr, Message* ms
 {
     if (msg->ChatId != 0){ // Checks if there are some updates
       Serial.println(msg->Text);
-      if(msg->Text == "/ac_on")
+      if(msg->Text == "/ac_on" || msg->Text == "/ac_on@zloy_home_bot")
       {
         acOn();
         client.postMessage(msg->ChatId, "On, Your Magesty!");
       }
-      else if(msg->Text == "/ac_off")
+      else if(msg->Text == "/ac_off" || msg->Text == "/ac_off@zloy_home_bot")
       {
         acOff();
         client.postMessage(msg->ChatId, "Off, Your Magesty!");
       }
-      else if(msg->Text == "/temperature")//@zloy_home_bot
+      else if(msg->Text == "/temperature" || msg->Text == "/temperature@zloy_home_bot")
       {
         char temperatureStr[20];
         sprintf(temperatureStr, "Temperature: %d.%02d C", (int)avgTemperature(), (int)abs(avgTemperature()*100)%100);
         client.postMessage(msg->ChatId, temperatureStr);
       }
-      else if(msg->Text == "/humidity")
+      else if(msg->Text == "/humidity" || msg->Text == "/humidity@zloy_home_bot")
       {
         char humidityStr[20];
         sprintf(humidityStr, "Humidity: %d.%02d %%", (int)avgHumidity(), (int)abs(avgHumidity()*100)%100);
         client.postMessage(msg->ChatId, humidityStr);
       }
-      else if(msg->Text == "/heat_index")
+      else if(msg->Text == "/heat_index" || msg->Text == "/heat_index@zloy_home_bot")
       {
         char heatIndexStr[20];
         sprintf(heatIndexStr, "Heat index: %d.%02d C", (int)avgHeatIndex(), (int)abs(avgHeatIndex()*100)%100);
         client.postMessage(msg->ChatId, heatIndexStr);
       }
-      else if(msg->Text == "/metrics")
+      else if(msg->Text == "/metrics" || msg->Text == "/metrics@zloy_home_bot")
       {
         char metricsStr[100];
         sprintf(metricsStr, "Temperature: %d.%02d C\n Humidity: %d.%02d %%\n Heat index: %d.%02d C", (int)avgHeatIndex(), (int)abs(avgHeatIndex()*100)%100, (int)avgHumidity(), (int)abs(avgHumidity()*100)%100, (int)avgHeatIndex(), (int)abs(avgHeatIndex()*100)%100);
