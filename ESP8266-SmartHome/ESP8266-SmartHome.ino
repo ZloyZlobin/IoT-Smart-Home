@@ -18,6 +18,8 @@ const char* password = SECRET_PASS;
 // Initialize Telegram BOT
 const String botToken = SECRET_BOT_TOKEN;
 
+const long logChatId = (long)LOG_CHAT_ID;
+
 WiFiClientSecure net_ssl;
 TelegramBotClient client(
       botToken, 
@@ -113,6 +115,7 @@ void onError (TelegramProcessError tbcErr, JwcProcessError jwcErr)
   Serial.print("jwcErr"); Serial.print((int)jwcErr); Serial.print(":"); Serial.println(toString(jwcErr));
   client = TelegramBotClient(botToken, net_ssl);
   client.begin(onReceive, onError);
+  client.postMessage(logChatId, "tbcErr: " + toString(tbcErr) + ", jwcErr: " + toString(jwcErr));
 }
 
 void setup() {
