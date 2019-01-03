@@ -111,6 +111,8 @@ void onError (TelegramProcessError tbcErr, JwcProcessError jwcErr)
   Serial.println("onError");
   Serial.print("tbcErr"); Serial.print((int)tbcErr); Serial.print(":"); Serial.println(toString(tbcErr));
   Serial.print("jwcErr"); Serial.print((int)jwcErr); Serial.print(":"); Serial.println(toString(jwcErr));
+  client = TelegramBotClient(botToken, net_ssl);
+  client.begin(onReceive, onError);
 }
 
 void setup() {
