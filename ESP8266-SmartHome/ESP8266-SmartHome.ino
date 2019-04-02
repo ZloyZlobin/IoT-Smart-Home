@@ -6,18 +6,24 @@
 #include <IRsend.h>
 #include "DHT.h"
 #include <ESP8266HTTPClient.h>
+#include <U8g2lib.h>
 
 #define DHTPIN 2
 #define DHTTYPE DHT22 
+
+#ifdef U8X8_HAVE_HW_SPI
+#include <SPI.h>
+#endif
+#ifdef U8X8_HAVE_HW_I2C
+#include <Wire.h>
+#endif
 
 // Initialize Wifi connection to the router
 const char* ssid  = SECRET_SSID;
 const char* password = SECRET_PASS;
 
-
 // Initialize Telegram BOT
 const String botToken = SECRET_BOT_TOKEN;
-
 const long logChatId = (long)LOG_CHAT_ID;
 
 WiFiClientSecure net_ssl;
@@ -44,6 +50,8 @@ float totalHeatIndex = 0;
 int numReadings = 0;
 unsigned long sendMetricDelay = 60000;//once per min
 unsigned long startTime = 0;
+
+U8G2_SSD1306_128X32_UNIVISION_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ 16, /* clock=*/ 5, /* data=*/ 4);
 
 float avgMetric(float metric, int number){
   return metric / number;
@@ -118,20 +126,31 @@ void onError (TelegramProcessError tbcErr, JwcProcessError jwcErr)
   client.postMessage(logChatId, "tbcErr: " + toString(tbcErr) + ", jwcErr: " + toString(jwcErr));
 }
 
+void DrawString(const char* str)
+{
+    u8g2.clearBuffer();
+    u8g2.setFont(u8g2_font_ncenB08_tr);
+    u8g2.drawStr(0, 16, str);
+    u8g2.sendBuffer();
+}
+
 void setup() {
+  u8g2.begin();
+  u8g2.setFontMode(0);
+  DrawString("Loading...");
+  
   irsend.begin();
   Serial.begin(115200);
+  
   while (!Serial); // Wait for the Serial monitor to be opened
 
   // attempt to connect to Wifi network:
-  Serial.print("Connecting Wifi: ");
+  DrawString("Connecting to Wifi...");
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
-    Serial.print(".");
   }
-  Serial.println("");
-  Serial.println("WiFi connected");
+  DrawString("WiFi connected");
 
   client.begin(onReceive, onError); 
   dht.begin();
@@ -205,9 +224,25 @@ void SendMetrics() {
   totalHeatIndex = 0;
 }
 
+void DrawMetrics()
+{
+    u8g2.clearBuffer();
+    u8g2.setFont(u8g2_font_ncenB08_tr);
+    u8g2.drawStr(0, 8, "IP:");
+    u8g2.drawStr(20, 8, WiFi.localIP().toString().c_str());
+    char temperatureStr[20];
+    sprintf(temperatureStr, "Temperature: %d.%02d C", (int)avgTemperature(), (int)abs(avgTemperature()*100)%100);
+    u8g2.drawStr(0, 20, temperatureStr);
+    char humidityStr[20];
+    sprintf(humidityStr, "Humidity: %d.%02d %%", (int)avgHumidity(), (int)abs(avgHumidity()*100)%100);
+    u8g2.drawStr(0, 32, humidityStr);
+    u8g2.sendBuffer();
+}
+
 void loop() {
-    //read metrics from dht11
+    //read metrics from dht22
     ReadMetrics();
+    DrawMetrics();
     
     unsigned long loopTime = millis() - startTime;
     if(loopTime > sendMetricDelay) {
