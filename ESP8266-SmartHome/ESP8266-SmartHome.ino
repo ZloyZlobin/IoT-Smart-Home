@@ -1,14 +1,14 @@
 #include "arduino_secrets.h"
 #include <ESP8266WiFi.h>
 #include <WiFiClientSecure.h>
-#include <TelegramBotClient.h>
+#include <UniversalTelegramBot.h>
 #include <IRremoteESP8266.h>
 #include <IRsend.h>
 #include "DHT.h"
 #include <ESP8266HTTPClient.h>
 #include <U8g2lib.h>
 
-#define DHTPIN 2
+#define DHTPIN 4
 #define DHTTYPE DHT22 
 
 #ifdef U8X8_HAVE_HW_SPI
@@ -27,7 +27,7 @@ const String botToken = SECRET_BOT_TOKEN;
 const long logChatId = (long)LOG_CHAT_ID;
 
 WiFiClientSecure net_ssl;
-TelegramBotClient client(
+UniversalTelegramBot bot(
       botToken, 
       net_ssl);
 
@@ -71,61 +71,48 @@ float avgHeatIndex(){
 }
 
 // Function called on receiving a message
-void onReceive (TelegramProcessError tbcErr, JwcProcessError jwcErr, Message* msg)
+void onReceive (telegramMessage* msg)
 {
-    if (msg->ChatId != 0){ // Checks if there are some updates
-      Serial.println(msg->Text);
-      if(msg->Text == "/ac_on" || msg->Text == "/ac_on@zloy_home_bot")
-      {
-        acOn();
-        client.postMessage(msg->ChatId, "On, Your Magesty!");
-      }
-      else if(msg->Text == "/ac_off" || msg->Text == "/ac_off@zloy_home_bot")
-      {
-        acOff();
-        client.postMessage(msg->ChatId, "Off, Your Magesty!");
-      }
-      else if(msg->Text == "/temperature" || msg->Text == "/temperature@zloy_home_bot")
-      {
-        char temperatureStr[20];
-        sprintf(temperatureStr, "Temperature: %d.%02d C", (int)avgTemperature(), (int)abs(avgTemperature()*100)%100);
-        client.postMessage(msg->ChatId, temperatureStr);
-      }
-      else if(msg->Text == "/humidity" || msg->Text == "/humidity@zloy_home_bot")
-      {
-        char humidityStr[20];
-        sprintf(humidityStr, "Humidity: %d.%02d %%", (int)avgHumidity(), (int)abs(avgHumidity()*100)%100);
-        client.postMessage(msg->ChatId, humidityStr);
-      }
-      else if(msg->Text == "/heat_index" || msg->Text == "/heat_index@zloy_home_bot")
-      {
-        char heatIndexStr[20];
-        sprintf(heatIndexStr, "Heat index: %d.%02d C", (int)avgHeatIndex(), (int)abs(avgHeatIndex()*100)%100);
-        client.postMessage(msg->ChatId, heatIndexStr);
-      }
-      else if(msg->Text == "/metrics" || msg->Text == "/metrics@zloy_home_bot")
-      {
-        char metricsStr[100];
-        sprintf(metricsStr, "Temperature: %d.%02d C\n Humidity: %d.%02d %%\n Heat index: %d.%02d C", (int)avgHeatIndex(), (int)abs(avgHeatIndex()*100)%100, (int)avgHumidity(), (int)abs(avgHumidity()*100)%100, (int)avgHeatIndex(), (int)abs(avgHeatIndex()*100)%100);
-        client.postMessage(msg->ChatId, metricsStr);
-      }
-      else
-      {
-         client.postMessage(msg->ChatId, "What the fuck '" + msg->Text + "' means?!!");
-      }
-    }
-}
-
-// Function called if an error occures
-void onError (TelegramProcessError tbcErr, JwcProcessError jwcErr)
-{
-  Serial.println("onError");
-  Serial.print("tbcErr"); Serial.print((int)tbcErr); Serial.print(":"); Serial.println(toString(tbcErr));
-  Serial.print("jwcErr"); Serial.print((int)jwcErr); Serial.print(":"); Serial.println(toString(jwcErr));
-  client = TelegramBotClient(botToken, net_ssl);
-  client.begin(onReceive, onError);
-  client.postMessage(logChatId, "tbcErr: " + toString(tbcErr) + ", jwcErr: " + toString(jwcErr));
-  ESP.restart();
+  Serial.println(msg->text);
+  String command = msg->text.substring(0, msg->text.indexOf('@'));
+  if(command == "/ac_on")
+  {
+    acOn();
+    bot.sendMessage(msg->chat_id, "On, Your Magesty!");
+  }
+  else if(command == "/ac_off")
+  {
+    acOff();
+    bot.sendMessage(msg->chat_id, "Off, Your Magesty!");
+  }
+  else if(command == "/temperature")
+  {
+    char temperatureStr[20];
+    sprintf(temperatureStr, "Temperature: %d.%02d C", (int)avgTemperature(), (int)abs(avgTemperature()*100)%100);
+    bot.sendMessage(msg->chat_id, temperatureStr);
+  }
+  else if(command == "/humidity")
+  {
+    char humidityStr[20];
+    sprintf(humidityStr, "Humidity: %d.%02d %%", (int)avgHumidity(), (int)abs(avgHumidity()*100)%100);
+    bot.sendMessage(msg->chat_id, humidityStr);
+  }
+  else if(command == "/heat_index")
+  {
+    char heatIndexStr[20];
+    sprintf(heatIndexStr, "Heat index: %d.%02d C", (int)avgHeatIndex(), (int)abs(avgHeatIndex()*100)%100);
+    bot.sendMessage(msg->chat_id, heatIndexStr);
+  }
+  else if(command == "/metrics")
+  {
+    char metricsStr[100];
+    sprintf(metricsStr, "Temperature: %d.%02d C\n Humidity: %d.%02d %%\n Heat index: %d.%02d C", (int)avgHeatIndex(), (int)abs(avgHeatIndex()*100)%100, (int)avgHumidity(), (int)abs(avgHumidity()*100)%100, (int)avgHeatIndex(), (int)abs(avgHeatIndex()*100)%100);
+    bot.sendMessage(msg->chat_id, metricsStr);
+  }
+  else
+  {
+    bot.sendMessage(msg->chat_id, "What the fuck '" + msg->text + "' means?!!");
+  }
 }
 
 void DrawString(const char* str)
@@ -154,7 +141,8 @@ void setup() {
   }
   DrawString("WiFi connected");
 
-  client.begin(onReceive, onError); 
+  net_ssl.setInsecure();
+  
   dht.begin();
 
   lastSendTime = millis();
@@ -251,7 +239,13 @@ void loop() {
       lastSendTime = millis();
     }
 
-    client.loop();
+    int numNewMessages = bot.getUpdates(bot.last_message_received + 1);
+    while(numNewMessages) {
+      for (int i=0; i<numNewMessages; i++) {
+        onReceive(&bot.messages[i]);
+      }
+      numNewMessages = bot.getUpdates(bot.last_message_received + 1);
+    }
     
     delay(1000);
 
