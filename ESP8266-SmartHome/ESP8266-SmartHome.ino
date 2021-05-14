@@ -88,7 +88,7 @@ void onReceive (telegramMessage* msg)
   else if(command == "/temperature")
   {
     char temperatureStr[20];
-    sprintf(temperatureStr, "Temperature: %d.%02d C", (int)avgTemperature(), (int)abs(avgTemperature()*100)%100);
+    sprintf(temperatureStr, "Temperature: %d.%02d %c%cC", (int)avgTemperature(), (int)abs(avgTemperature()*100)%100, 0xC2, 0xB0);
     bot.sendMessage(msg->chat_id, temperatureStr);
   }
   else if(command == "/humidity")
@@ -100,13 +100,13 @@ void onReceive (telegramMessage* msg)
   else if(command == "/heat_index")
   {
     char heatIndexStr[20];
-    sprintf(heatIndexStr, "Heat index: %d.%02d C", (int)avgHeatIndex(), (int)abs(avgHeatIndex()*100)%100);
+    sprintf(heatIndexStr, "Heat index: %d.%02d %c%cC", (int)avgHeatIndex(), (int)abs(avgHeatIndex()*100)%100, 0xC2, 0xB0);
     bot.sendMessage(msg->chat_id, heatIndexStr);
   }
   else if(command == "/metrics")
   {
     char metricsStr[100];
-    sprintf(metricsStr, "Temperature: %d.%02d C\n Humidity: %d.%02d %%\n Heat index: %d.%02d C", (int)avgHeatIndex(), (int)abs(avgHeatIndex()*100)%100, (int)avgHumidity(), (int)abs(avgHumidity()*100)%100, (int)avgHeatIndex(), (int)abs(avgHeatIndex()*100)%100);
+    sprintf(metricsStr, "Temperature: %d.%02d %c%cC\n Humidity: %d.%02d %%\n Heat index: %d.%02d %c%cC", (int)avgHeatIndex(), (int)abs(avgHeatIndex()*100)%100, 0xC2, 0xB0, (int)avgHumidity(), (int)abs(avgHumidity()*100)%100, (int)avgHeatIndex(), (int)abs(avgHeatIndex()*100)%100, 0xC2, 0xB0);
     bot.sendMessage(msg->chat_id, metricsStr);
   }
   else
