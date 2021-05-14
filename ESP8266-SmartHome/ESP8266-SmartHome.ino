@@ -233,18 +233,18 @@ void loop() {
     ReadMetrics();
     DrawMetrics();
     
-    unsigned long loopTime = millis() - lastSendTime;
-    if(loopTime > sendMetricDelay) {
-      SendMetrics();
-      lastSendTime = millis();
-    }
-
     int numNewMessages = bot.getUpdates(bot.last_message_received + 1);
     while(numNewMessages) {
       for (int i=0; i<numNewMessages; i++) {
         onReceive(&bot.messages[i]);
       }
       numNewMessages = bot.getUpdates(bot.last_message_received + 1);
+    }
+
+    unsigned long loopTime = millis() - lastSendTime;
+    if(loopTime > sendMetricDelay) {
+      SendMetrics();
+      lastSendTime = millis();
     }
     
     delay(1000);
